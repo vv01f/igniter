@@ -14,7 +14,7 @@ assert_tools () {
         test $err -eq 0 || exit $err
 }
 
-dependecies="cat jq lncli"
+dependecies="cat grep jq lncli"
 assert_tools ${dependecies}
 
 # before running this script, the array below must be populated with
@@ -30,10 +30,20 @@ declare pub_keys=(
     e86f6e4beb29fada99497f1db754d4497bf3ed3ffcd850696a2173c6cd49f28eb3 # next hop's pub key
     40625736d487d4a5607a9107d9ce7bd7841c9f205513dde998b8d56009aada0a29 # your node's pub key
 )
+# first entry in pub_keys
+FIRST_PUB_KEY=${pub_keys[0]}
+# test for not exactly 1 channel
+if test $(lncli listchannels | grep ${FIRST_PUB_KEY} -A 10 | grep chan_id | cut -d '"' -f4|wc -l) -ne 1 ; then
+        >&2 printf "Error: more than one channel to first public key.\n"
+        exit 1
+fi
+# initial channel to transmit from
+OUTGOING_CHAN_ID=$(lncli listchannels | grep ${FIRST_PUB_KEY} -A 10 | grep chan_id | cut -d '"' -f4)
 
-AMOUNT=10                            # value in satoshis to transmit
-OUTGOING_CHAN_ID=749457911902765057  # initial channel to transmit from
-MAX_FEE=100                          # Max fee, in sats that you're prepared to pay.
+# value in satoshis to transmit
+AMOUNT=1000000
+# Max fee, in sats that you're prepared to pay.
+MAX_FEE=1
 
 ####################################################
 ## the remaining of this script can remain untouched
