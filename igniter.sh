@@ -59,7 +59,14 @@ fi
 
 # Arg option: 'build'
 build () {
-    $LNCLI buildroute --amt ${AMOUNT} --hops ${HOPS} --outgoing_chan_id ${OUTGOING_CHAN_ID}
+#    $LNCLI buildroute --amt ${AMOUNT} --hops ${HOPS} --outgoing_chan_id ${OUTGOING_CHAN_ID}
+    until $LNCLI buildroute --amt ${AMOUNT} --hops ${HOPS} --outgoing_chan_id ${OUTGOING_CHAN_ID}
+    do
+       date +"%Y-%m-%d %H:%M:%S"
+       printf "Failed building route, retrying in 60 sec. or after key pressed. Press c to cancel.\n"
+       read -t 60 key
+       if "${key}" = "c"; then break; fi
+    done
 }
 
 # Arg option: 'send'
