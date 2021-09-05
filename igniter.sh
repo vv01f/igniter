@@ -38,7 +38,22 @@ if test $(lncli listchannels | grep ${FIRST_PUB_KEY} -A 10 | grep chan_id | cut 
         exit 1
 fi
 # initial channel to transmit from
-OUTGOING_CHAN_ID=$(lncli listchannels | grep ${FIRST_PUB_KEY} -A 10 | grep chan_id | cut -d '"' -f4)
+OUTGOING_CHAN_ID=$($LNCLI listchannels | jq -cr '.channels[] | { remote_pubkey, chan_id } | select( .remote_pubkey == "'${FIRST_PUBKEY}'" ) | { chan_i
+d } | flatten | .[0]' )
+CHAN_COUNT=$(echo "${OUTGOING_CHAN_ID}" | wc -l)
+if test ${CHAN_COUNT} -ne 1 ; then
+        >&2 printf "Error: more than one channel to first public key:\n\n${OUTGOING_CHAN_ID}\n"
+        exit 1
+fi
+if test -z "${OUTGOING_CHAN_ID}"; then
+        >&2 printf "route incomplete or no chan id found.\n"
+        exit 2
+fi
+
+# todo: 
+# + alt chan id per option
+# + ring file per option, reading members, amount, fee, …
+# + remove bashisms
 
 # value in satoshis to transmit
 AMOUNT=1000000
